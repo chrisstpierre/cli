@@ -57,7 +57,7 @@ def list_command():
 
     if count == 0:
         click.echo('No application found. Create your first app with')
-        click.echo(click.style('$ asyncy apps create', fg='magenta'))
+        click.echo(click.style('$ story apps create', fg='magenta'))
     else:
         click.echo(table.draw())
 
