@@ -67,8 +67,14 @@ def list_command(app):
     default=None,
     help='(optional) Message why variable(s) were created.',
 )
+@click.option(
+    '--file',
+    '-f',
+    is_flag=True,
+    help='(optional) Interprets value(s) as a filepath and sets the variable(s) as the file content.',
+)
 @options.app()
-def set_command(variables, app, message):
+def set_command(variables, app, message, file):
     """
     Set one or more environment variables.
 
@@ -78,6 +84,9 @@ def set_command(variables, app, message):
 
         $ story config set twitter.oauth_token=value
 
+    To set an environment variable as the contents of a file use
+
+        $ story config set key=/path/to/file
     """
     cli.user()
 
@@ -100,11 +109,24 @@ def set_command(variables, app, message):
             click.echo(set_command.__doc__.strip())
             sys.exit(1)
 
+        env_val = val
+        if file:
+            try:
+                with open(val, "r") as f:
+                    env_val = f.read(20_000)
+            except OSError:
+                click.echo(
+                    f'File "{val}" cannot be read. Environmental variables were not set.',
+                    err=True,
+                )
+                click.echo(set_command.__doc__.strip())
+                sys.exit(1)
+
         if '.' in key:
             service, key = tuple(key.split('.', 1))
-            config.setdefault(service.lower(), {})[key.upper()] = val
+            config.setdefault(service.lower(), {})[key.upper()] = env_val
         else:
-            config[key.upper()] = val
+            config[key.upper()] = env_val
 
         click.echo()
         click.echo(f" {click.style(key.upper(), fg='green')}: {val}")
